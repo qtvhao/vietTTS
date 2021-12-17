@@ -1,3 +1,4 @@
+import os
 import pickle
 from functools import partial
 from typing import Deque
@@ -5,6 +6,7 @@ from typing import Deque
 import haiku as hk
 import jax
 import jax.numpy as jnp
+import jax.tools.colab_tpu
 import matplotlib.pyplot as plt
 import optax
 from tqdm.auto import tqdm
@@ -15,6 +17,11 @@ from .data_loader import load_textgrid_wav
 from .dsp import MelFilter
 from .model import AcousticModel
 from .utils import print_flags
+
+
+def setup_colab_tpu():
+    jax.tools.colab_tpu.setup_tpu()
+    print(jax.devices())
 
 
 @hk.transform_with_state
@@ -118,7 +125,7 @@ def train():
     )
     batch = next(train_data_iter)
     batch = batch._replace(mels=melfilter(batch.wavs.astype(jnp.float32) / (2 ** 15)))
-    params, aux, rng, optim_state = initial_state(batch)
+    params, aux, rng, optim_state = initial_state(jax.tree_map(lambda x: x[:1], batch))
     losses = Deque(maxlen=1000)
     val_losses = Deque(maxlen=100)
 
@@ -211,6 +218,8 @@ def train():
 
 if __name__ == "__main__":
     print_flags(FLAGS.__dict__)
+    if "COLAB_TPU_ADDR" in os.environ:
+        setup_colab_tpu()
     if not FLAGS.ckpt_dir.exists():
         print("Create checkpoint dir at", FLAGS.ckpt_dir)
         FLAGS.ckpt_dir.mkdir(parents=True, exist_ok=True)
