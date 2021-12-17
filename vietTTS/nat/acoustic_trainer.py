@@ -21,7 +21,6 @@ from .utils import print_flags
 
 def setup_colab_tpu():
     jax.tools.colab_tpu.setup_tpu()
-    print(jax.devices())
 
 
 @hk.transform_with_state
@@ -47,7 +46,6 @@ def loss_fn(params, aux, rng, inputs: AcousticInput, is_training=True):
     B, L, D = mels.shape
     go_frame = jnp.zeros((B, 1, D), dtype=jnp.float32)
     inp_mels = jnp.concatenate((go_frame, mels[:, 1::2][:, :-1]), axis=1)
-    print(inp_mels.shape, mels.shape)
     n_frames = inputs.durations * FLAGS.sample_rate / (FLAGS.n_fft // 4)
     inputs = inputs._replace(mels=inp_mels, durations=n_frames)
     model = net if is_training else val_net
@@ -124,8 +122,9 @@ def train():
         FLAGS.fmax,
     )
     batch = next(train_data_iter)
+    batch = jax.tree_map(lambda x: x[:1], batch)
     batch = batch._replace(mels=melfilter(batch.wavs.astype(jnp.float32) / (2 ** 15)))
-    params, aux, rng, optim_state = initial_state(jax.tree_map(lambda x: x[:1], batch))
+    params, aux, rng, optim_state = initial_state(batch)
     losses = Deque(maxlen=1000)
     val_losses = Deque(maxlen=100)
 
