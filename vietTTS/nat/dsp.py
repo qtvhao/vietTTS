@@ -11,21 +11,20 @@ from jax.numpy import ndarray
 def rolling_window(a: ndarray, window: int, hop_length: int):
     """return a stack of overlap subsequence of an array.
     ``return jnp.stack( [a[0:10], a[5:15], a[10:20],...], axis=0)``
-    Source: https://github.com/google/jax/issues/3171
     Args:
       a (ndarray): input array of shape `[L, ...]`
       window (int): length of each subarray (window).
       hop_length (int): distance between neighbouring windows.
     """
 
-    idx = (
-        jnp.arange(window)[:, None]
-        + jnp.arange((len(a) - window) // hop_length + 1)[None, :] * hop_length
-    )
-    return a[idx]
+    assert window / hop_length == 4.0
+    assert a.shape[0] % hop_length == 0
+    blocks = a.reshape((-1, hop_length) + a.shape[1:])
+    x = jnp.concatenate((blocks[:-3], blocks[1:-2], blocks[2:-1], blocks[3:]), axis=1)
+    x = jnp.swapaxes(x, 0, 1)
+    return x
 
 
-@partial(jax.jit, static_argnums=[1, 2, 3, 4, 5, 6])
 def stft(
     y: ndarray,
     n_fft: int = 2048,
@@ -62,7 +61,6 @@ def stft(
     return stft_matrix[:d]
 
 
-@partial(jax.jit, static_argnums=[1, 2, 3, 4, 5, 6])
 def batched_stft(
     y: ndarray,
     n_fft: int,
