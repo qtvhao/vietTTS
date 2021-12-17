@@ -104,25 +104,27 @@ def batched_stft(
 class MelFilter:
     """Convert waveform to mel spectrogram."""
 
-    def __init__(self, sample_rate: int, n_fft: int, n_mels: int, fmin=0.0, fmax=8000):
+    def __init__(
+        self, sample_rate: int, n_fft: int, window, n_mels: int, fmin=0.0, fmax=8000
+    ):
         self.melfb = jax.device_put(
             librosa.filters.mel(
                 sr=sample_rate, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax
             )
         )
         self.n_fft = n_fft
+        self.window = window
 
     def __call__(self, y: ndarray) -> ndarray:
         hop_length = self.n_fft // 4
-        window_length = self.n_fft
         assert len(y.shape) == 2
         y = rearrange(y, "n s -> s n")
         p = (self.n_fft - hop_length) // 2
         y = jnp.pad(y, ((p, p), (0, 0)), mode="reflect")
         spec = batched_stft(
-            y, self.n_fft, hop_length, window_length, "hann", False, "reflect"
+            y, self.n_fft, hop_length, self.window, "hann", False, "reflect"
         )
-        mag = jnp.sqrt(jnp.square(spec.real) + jnp.square(spec.imag) + 1e-9)
+        mag = jnp.sqrt(jnp.square(spec.real) + jnp.square(spec.imag))
         mel = jnp.einsum("ms,sfn->nfm", self.melfb, mag)
-        cond = jnp.log(jnp.clip(mel, a_min=1e-5, a_max=None))
+        cond = jnp.log(jnp.clip(mel, a_min=1e-3, a_max=None))
         return cond

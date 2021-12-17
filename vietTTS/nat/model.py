@@ -82,15 +82,11 @@ class AcousticModel(hk.Module):
         self.decoder = hk.deep_rnn_with_skip_connections(
             [hk.LSTM(FLAGS.acoustic_decoder_dim), hk.LSTM(FLAGS.acoustic_decoder_dim)]
         )
-        self.projection = hk.Linear(FLAGS.mel_dim)
+        self.projection = hk.Linear(FLAGS.mel_dim * 2)
 
         # prenet
         self.prenet_fc1 = hk.Linear(256, with_bias=False)
         self.prenet_fc2 = hk.Linear(256, with_bias=False)
-        # posnet
-        self.postnet_convs = [hk.Conv1D(FLAGS.postnet_dim, 5) for _ in range(4)]
-        self.postnet_convs.append(hk.Conv1D(FLAGS.mel_dim, 5))
-        self.postnet_bns = [hk.BatchNorm(True, True, 0.9) for _ in range(4)] + [None]
 
     def prenet(self, x, dropout=0.5):
         x = jax.nn.relu(self.prenet_fc1(x))
@@ -99,29 +95,25 @@ class AcousticModel(hk.Module):
         x = hk.dropout(hk.next_rng_key(), dropout, x)
         return x
 
-    def upsample(self, x, durations, L):
-        ruler = jnp.arange(0, L)[None, :]  # B, L
+    def upsample(self, cond, durations, L):
+        durations = durations / 2
+        yruler = jnp.arange(0, L)[None, :]  # B, L
         end_pos = jnp.cumsum(durations, axis=1)
-        mid_pos = end_pos - durations / 2  # B, T
-
-        d2 = jnp.square((mid_pos[:, None, :] - ruler[:, :, None])) / 10.0
+        y = jnp.pad(end_pos, ((0, 0), (1, 0)))
+        x = jnp.arange(0, y.shape[1])[None, :]
+        x = jnp.broadcast_to(x, y.shape)
+        yruler = jnp.tile(yruler, (x.shape[0], 1))
+        pos = jax.vmap(jnp.interp)(yruler, y, x)
+        xruler = jnp.arange(0, cond.shape[1])
+        d = pos[:, :, None] - xruler[None, None, :]
+        d2 = jnp.square(d)
         w = jax.nn.softmax(-d2, axis=-1)
-        hk.set_state("attn", w)
-        x = jnp.einsum("BLT,BTD->BLD", w, x)
-        return x
-
-    def postnet(self, mel: ndarray) -> ndarray:
-        x = mel
-        for conv, bn in zip(self.postnet_convs, self.postnet_bns):
-            x = conv(x)
-            if bn is not None:
-                x = bn(x, is_training=self.is_training)
-                x = jnp.tanh(x)
-            x = hk.dropout(hk.next_rng_key(), 0.5, x) if self.is_training else x
-        return x
+        hk.set_state("attn", w[0])
+        cond = jnp.einsum("BLT,BTD->BLD", w, cond)
+        return cond
 
     def inference(self, tokens, durations, n_frames):
-        B, L = tokens.shape
+        N, L = tokens.shape
         lengths = jnp.array([L], dtype=jnp.int32)
         x = self.encoder(tokens, lengths)
         x = self.upsample(x, durations, n_frames)
@@ -133,23 +125,24 @@ class AcousticModel(hk.Module):
             x = jnp.concatenate((cond, prev_mel), axis=-1)
             x, new_hxcx = self.decoder(x, hxcx)
             x = self.projection(x)
-            return x, (x, new_hxcx)
+            N, D = x.shape
+            x = jnp.reshape(x, (N, 2, D // 2))
+            return x, (x[:, 1], new_hxcx)
 
         state = (
-            jnp.zeros((B, FLAGS.mel_dim), dtype=jnp.float32),
-            self.decoder.initial_state(B),
+            jnp.zeros((N, FLAGS.mel_dim), dtype=jnp.float32),
+            self.decoder.initial_state(N),
         )
         x, _ = hk.dynamic_unroll(loop_fn, x, state, time_major=False)
-        residual = self.postnet(x)
-        return x + residual
+        return x
 
     def __call__(self, inputs: AcousticInput):
         x = self.encoder(inputs.phonemes, inputs.lengths)
         x = self.upsample(x, inputs.durations, inputs.mels.shape[1])
         mels = self.prenet(inputs.mels)
         x = jnp.concatenate((x, mels), axis=-1)
-        B, L, _ = x.shape
-        hx = self.decoder.initial_state(B)
+        N, L, _ = x.shape
+        hx = self.decoder.initial_state(N)
 
         def zoneout_decoder(inputs, prev_state):
             x, mask = inputs
@@ -160,10 +153,11 @@ class AcousticModel(hk.Module):
             return x, state
 
         mask = jax.tree_map(
-            lambda x: jax.random.bernoulli(hk.next_rng_key(), 0.1, (B, L, x.shape[-1])),
+            lambda x: jax.random.bernoulli(hk.next_rng_key(), 0.1, (N, L, x.shape[-1])),
             hx,
         )
         x, _ = hk.dynamic_unroll(zoneout_decoder, (x, mask), hx, time_major=False)
         x = self.projection(x)
-        residual = self.postnet(x)
-        return x, x + residual
+        N, L, D = x.shape
+        x = jnp.reshape(x, (N, L * 2, D // 2))
+        return x
