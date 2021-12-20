@@ -28,12 +28,12 @@ class FLAGS(Namespace):
     n_fft = 2048
     window = 1024
     sample_rate = 16000
-    fmin = 0.0
-    fmax = 8000
+    fmin = 80.0
+    fmax = 7600.0
 
     # training
     batch_size = 32
-    learning_rate = 1e-4
+    learning_rate = 1024e-6  # ~1e-3
     duration_learning_rate = 1e-4
     max_grad_norm = 1.0
     weight_decay = 1e-4
