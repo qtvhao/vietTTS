@@ -21,4 +21,6 @@ RUN alias python=/usr/local/bin/python3.6
 RUN ls /usr/local/bin/
 RUN bash ./scripts/quick_start.sh
 RUN bash ./scripts/download_aligned_infore_dataset.sh
+RUN aws configure set aws_access_key_id admin
+RUN aws configure set aws_secret_access_key password
 COPY create.sh .
