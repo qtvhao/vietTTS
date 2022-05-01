@@ -6,8 +6,6 @@ tasks:
   - init: |
       pip3 install -e .
       bash ./scripts/quick_start.sh
-#      conda create -n env_pytorch python=3.6
-#      conda activate env_pytorch
       pip install torchvision matplotlib
       sudo apt-get install libsndfile1 -y
       (cd assets/infore/hifigan/ && wget https://huggingface.co/spaces/ntt123/vietTTS/resolve/main/hk_hifi.pickle)
