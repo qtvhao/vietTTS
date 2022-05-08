@@ -23,4 +23,6 @@ RUN bash ./scripts/quick_start.sh
 RUN bash ./scripts/download_aligned_infore_dataset.sh
 RUN aws configure set aws_access_key_id admin
 RUN aws configure set aws_secret_access_key password
+RUN python -m vietTTS.nat.duration_trainer
+RUN python -m vietTTS.nat.acoustic_trainer
 COPY create.sh .
