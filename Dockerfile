@@ -5,7 +5,7 @@ RUN apt update
 RUN apt install python3-pip -y
 RUN apt-get install libsndfile1 zip awscli -y
 RUN apt-get update && apt-get install -y python3.6 python3-distutils python3-pip python3-apt
-RUN pip3 install torchvision matplotlib
+RUN pip3 install --no-cache-dir torchvision matplotlib
 
 COPY setup.cfg .
 COPY setup.py .
