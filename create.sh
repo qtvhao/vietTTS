@@ -6,4 +6,4 @@ python -m vietTTS.synthesizer \
 HASH=`echo $TEXT | md5sum | awk '{ print $1 }'`
 echo $HASH
 aws s3 cp clip.wav "s3://tts-results/$HASH.wav" --endpoint-url "$S3_ENDPOINT_URL"
-echo "PRESIGNED-URL=$(aws s3 presign "s3://tts-results/$HASH.wav" --endpoint-url $S3_ENDPOINT_URL) "
+echo "\nPRESIGNED-URL=$(aws s3 presign "s3://tts-results/$HASH.wav" --endpoint-url $S3_ENDPOINT_URL) "
