@@ -1,0 +1,11 @@
+dm-haiku
+einops
+fire
+gdown
+jax
+jaxlib
+librosa
+optax
+tabulate
+tqdm
+matplotlib

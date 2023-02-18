@@ -8,11 +8,12 @@ RUN apt-get update && apt-get install -y git
 
 COPY requirements.txt .
 
-#RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 COPY setup.cfg .
 COPY setup.py .
 COPY vietTTS vietTTS
+COPY assets assets
 
 RUN pip3 install -e .
 RUN apt-get update && apt-get install -y wget
