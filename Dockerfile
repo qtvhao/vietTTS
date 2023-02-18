@@ -1,13 +1,24 @@
-FROM pytorch/pytorch:1.8.1-cuda11.1-cudnn8-runtime
+FROM pytorch/pytorch
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y git
 
-RUN git clone https://github.com/ntt123/vietTTS.git
+#RUN git clone https://github.com/qtvhao/vietTTS.git
 
-RUN pip install -r /app/vietTTS/requirements.txt
+COPY requirements.txt .
 
+#RUN pip install -r requirements.txt
+
+COPY setup.cfg .
+COPY setup.py .
+COPY vietTTS vietTTS
+
+RUN pip3 install -e .
+RUN apt-get update && apt-get install -y wget
+COPY scripts scripts
+RUN apt-get update && apt-get install libsndfile1 -y
+RUN bash ./scripts/quick_start.sh
 EXPOSE 5000
 
-CMD ["python", "/app/vietTTS/server.py"]
+CMD ["python", "app.py"]
