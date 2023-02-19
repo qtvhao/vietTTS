@@ -14,6 +14,7 @@ COPY vietTTS vietTTS
 COPY assets assets
 
 RUN pip3 install -e .
+
 COPY scripts scripts
 
 RUN wget https://huggingface.co/datasets/ntt123/infore/resolve/main/infore_16k.zip && \
@@ -27,6 +28,10 @@ COPY downsample.sh .
 RUN bash downsample.sh
 
 RUN rm downsample.sh
+RUN git clone https://github.com/microsoft/DNS-Challenge && \
+    cd DNS-Challenge/NSNet2-baseline/ && \
+    git checkout -f 8b87a33b2892f147b5c7ad39ea978453730db269 && \
+    python run_nsnet2.py -i /app/infore_16k/ -o /app/infore_16k_denoised -m ./nsnet2-20ms-baseline.onnx
 
 EXPOSE 5000
 
