@@ -1,5 +1,6 @@
 FROM tts-base
 
+WORKDIR /app/
 COPY setup.cfg .
 COPY setup.py .
 COPY vietTTS vietTTS
@@ -10,8 +11,8 @@ RUN pip3 install -e .
 COPY scripts scripts
 
 RUN bash ./scripts/quick_start.sh
-RUN wget https://huggingface.co/datasets/ntt123/infore/resolve/main/infore_16k.zip && \
-    unzip infore_16k.zip -d /app/vietTTS/data && \
+COPY infore_16k.zip .
+RUN unzip infore_16k.zip -d /app/vietTTS/data && \
     rm infore_16k.zip
 
 #RUN mkdir -p /app/infore_16k
@@ -33,6 +34,7 @@ RUN wget https://huggingface.co/datasets/ntt123/infore/resolve/main/infore_16k.z
 COPY test_app.py .
 COPY app.py .
 RUN mkdir /output/
+RUN pytest test_app.py
 EXPOSE 5000
 
 CMD ["python", "app.py"]
