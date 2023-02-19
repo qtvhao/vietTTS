@@ -9,3 +9,6 @@ optax
 tabulate
 tqdm
 matplotlib
+soundfile
+librosa
+onnxruntime==1.14.0
