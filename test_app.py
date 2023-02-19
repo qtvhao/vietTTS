@@ -11,9 +11,7 @@ def test_run_synthesizer():
         client = app.app.test_client()
         data = {'TEXT': 'Hello, world!'}
         response = client.post('/synthesizer', json=data)
-        print(response.data)
-        print(response.data)
-        print(response.data)
-        print(response.data)
         assert response.status_code == 200
-        expected_output = {'HASH': 'hash123', 'PRESIGNED-URL': 'url456'}
+#         expected_output = {'HASH': 'hash123', 'PRESIGNED-URL': 'url456'}
+#         assert json.loads(response.data) == expected_output
+#         print(response.data)

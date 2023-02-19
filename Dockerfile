@@ -14,13 +14,13 @@ RUN wget https://huggingface.co/datasets/ntt123/infore/resolve/main/infore_16k.z
     unzip infore_16k.zip -d /app/vietTTS/data && \
     rm infore_16k.zip
 
-RUN mkdir -p /app/infore_16k
-
-COPY downsample.sh .
-
-RUN bash downsample.sh
-
-RUN rm downsample.sh
+#RUN mkdir -p /app/infore_16k
+#
+#COPY downsample.sh .
+#
+#RUN bash downsample.sh
+#
+#RUN rm downsample.sh
 #RUN git clone https://github.com/microsoft/DNS-Challenge && \
 #    cd DNS-Challenge/ && git checkout -f 8b87a33b2892f147b5c7ad39ea978453730db269 && \
 #    cd NSNet2-baseline/ && \

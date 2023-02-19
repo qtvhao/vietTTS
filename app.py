@@ -11,7 +11,7 @@ def run_synthesizer():
     if not text:
         return 'Missing TEXT field in payload', 400
     try:
-        cmd = f"python -m vietTTS.synthesizer --lexicon-file=train_data/lexicon.txt --text='{text}' --output=clip.wav && echo $(echo -n {text} | md5sum | awk '{{ print $1 }}')" #  && aws s3 cp clip.wav 's3://tts-results/$HASH.wav' --endpoint-url {S3_ENDPOINT_URL} && aws s3 presign 's3://tts-results/$HASH.wav' --endpoint-url {S3_ENDPOINT_URL}
+        cmd = f"python -m vietTTS.synthesizer --lexicon-file=train_data/lexicon.txt --text='{text}' --output=/output/clip.wav"
         result = subprocess.check_output(cmd, shell=True, text=True)
         output = {}
         output['HASH'] = result.split('\n')[0]
