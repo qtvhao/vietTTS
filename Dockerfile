@@ -2,7 +2,7 @@ FROM pytorch/pytorch
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y git libsndfile1 sox unzip
+RUN apt-get update && apt-get install -y git libsndfile1 sox unzip wget
 
 COPY requirements.txt .
 
@@ -14,7 +14,6 @@ COPY vietTTS vietTTS
 COPY assets assets
 
 RUN pip3 install -e .
-RUN apt-get update && apt-get install -y wget
 COPY scripts scripts
 
 RUN wget https://huggingface.co/datasets/ntt123/infore/resolve/main/infore_16k.zip && \
