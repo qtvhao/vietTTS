@@ -1,23 +1,24 @@
+import subprocess
+import json
 from flask import Flask, request
 
 app = Flask(__name__)
 
 @app.route('/synthesizer', methods=['POST'])
-def synthesizer():
-    text = request.form['text']
-    # Run the synthesizer script
-    import subprocess
-    command = f'python -m vietTTS.synthesizer --lexicon-file=train_data/lexicon.txt --text="{text}" --output=clip.wav'
-    subprocess.run(command, shell=True)
-    # Upload the audio file to S3
-    import hashlib
-    hash_value = hashlib.md5(text.encode()).hexdigest()
-    s3_endpoint_url = '<your S3 endpoint URL>'
-    s3_bucket_name = '<your S3 bucket name>'
-    subprocess.run(f'aws s3 cp clip.wav s3://{s3_bucket_name}/{hash_value}.wav --endpoint-url {s3_endpoint_url}', shell=True)
-    # Generate a presigned URL for the audio file
-    presigned_url = subprocess.check_output(f'aws s3 presign s3://{s3_bucket_name}/{hash_value}.wav --endpoint-url {s3_endpoint_url}', shell=True)
-    return f'Presigned URL: {presigned_url}'
+def run_synthesizer():
+    payload = request.json
+    text = payload.get('TEXT')
+    if not text:
+        return 'Missing TEXT field in payload', 400
+    try:
+        cmd = f"python -m vietTTS.synthesizer --lexicon-file=train_data/lexicon.txt --text='{text}' --output=clip.wav && echo $(echo -n {text} | md5sum | awk '{{ print $1 }}') && aws s3 cp clip.wav 's3://tts-results/$HASH.wav' --endpoint-url {S3_ENDPOINT_URL} && aws s3 presign 's3://tts-results/$HASH.wav' --endpoint-url {S3_ENDPOINT_URL}"
+        result = subprocess.check_output(cmd, shell=True, text=True)
+        output = {}
+        output['HASH'] = result.split('\n')[0]
+        output['PRESIGNED-URL'] = result.split('\n')[2]
+        return json.dumps(output), 200
+    except Exception as e:
+        return str(e), 500
 
 if __name__ == '__main__':
     app.run()
