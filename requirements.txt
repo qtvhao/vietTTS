@@ -12,3 +12,5 @@ matplotlib
 soundfile
 librosa
 onnxruntime==1.14.0
+Flask
+pytest

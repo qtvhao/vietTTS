@@ -1,12 +1,4 @@
-FROM pytorch/pytorch
-
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y git libsndfile1 sox unzip wget
-
-COPY requirements.txt .
-
-RUN pip3 install -r requirements.txt
+FROM tts-base
 
 COPY setup.cfg .
 COPY setup.py .
@@ -17,6 +9,7 @@ RUN pip3 install -e .
 
 COPY scripts scripts
 
+RUN bash ./scripts/quick_start.sh
 RUN wget https://huggingface.co/datasets/ntt123/infore/resolve/main/infore_16k.zip && \
     unzip infore_16k.zip -d /app/vietTTS/data && \
     rm infore_16k.zip
@@ -37,9 +30,9 @@ RUN rm downsample.sh
 #COPY package.sh .
 #RUN bash package.sh
 #RUN rm package.sh
-RUN pip install Flask pytest
 COPY test_app.py .
 COPY app.py .
+RUN mkdir /output/
 EXPOSE 5000
 
 CMD ["python", "app.py"]
