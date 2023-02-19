@@ -37,7 +37,9 @@ RUN rm downsample.sh
 #COPY package.sh .
 #RUN bash package.sh
 #RUN rm package.sh
+RUN pip install Flask
 
+COPY app.py .
 EXPOSE 5000
 
 CMD ["python", "app.py"]
