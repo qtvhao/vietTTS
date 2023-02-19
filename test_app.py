@@ -1,29 +1,19 @@
 import json
 import subprocess
-import unittest
 from flask import Flask
-from unittest.mock import patch
+from unittest import mock
+import app
 
-app = Flask(__name__)
-
-class TestAPI(unittest.TestCase):
-
-    def setUp(self):
-        app.testing = True
-        self.client = app.test_client()
-
-    @patch('subprocess.check_output')
-    def test_synthesizer(self, mock_check_output):
-#         mock_check_output.return_value = '1234567890abcdef\n\nhttps://s3.amazonaws.com/tts-results/1234567890abcdef.wav\n'
+def test_run_synthesizer():
+    app.app.testing = True
+    with mock.patch('subprocess.check_output') as mock_check_output:
+        mock_check_output.return_value = 'hash123\nurl456\n'
+        client = app.app.test_client()
         data = {'TEXT': 'Hello, world!'}
-        response = self.client.post('/synthesizer', json=data)
-#         self.assertEqual(response.status_code, 200)
-#         output = json.loads(response.data.decode('utf-8'))
-#         self.assertEqual(output['HASH'], '1234567890abcdef')
-#         self.assertEqual(output['PRESIGNED-URL'], 'https://s3.amazonaws.com/tts-results/1234567890abcdef.wav')
-
-    def tearDown(self):
-        pass
-
-if __name__ == '__main__':
-    unittest.main()
+        response = client.post('/synthesizer', json=data)
+        print(response.data)
+        print(response.data)
+        print(response.data)
+        print(response.data)
+        assert response.status_code == 200
+        expected_output = {'HASH': 'hash123', 'PRESIGNED-URL': 'url456'}
