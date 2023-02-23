@@ -11,6 +11,9 @@ def run_synthesizer():
     text = payload.get('TEXT')
     if not text:
         return 'Missing TEXT field in payload', 400
+    output_dir = '/output'
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     try:
         cmd = f"python3 -m vietTTS.synthesizer --text '{text}' --output /output/clip.wav --lexicon-file assets/infore/lexicon.txt --silence-duration 0.2"
         output = subprocess.check_output(cmd, shell=True, text=True)
