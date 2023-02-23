@@ -7,6 +7,6 @@ if [ ! -f assets/infore/hifigan/g_01140000 ]; then
   python3 -m vietTTS.hifigan.convert_torch_model_to_haiku --config-file=assets/hifigan/config.json --checkpoint-file=assets/infore/hifigan/g_01140000
 fi
 
-echo "Generate audio clip"
-text=`cat assets/transcript.txt`
-python3 -m vietTTS.synthesizer --text "$text" --output assets/infore/clip.wav --lexicon-file assets/infore/lexicon.txt --silence-duration 0.2
+# echo "Generate audio clip"
+# text=`cat assets/transcript.txt`
+# python3 -m vietTTS.synthesizer --text "$text" --output assets/infore/clip.wav --lexicon-file assets/infore/lexicon.txt --silence-duration 0.2
